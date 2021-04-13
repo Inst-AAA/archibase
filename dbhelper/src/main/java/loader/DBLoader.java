@@ -21,6 +21,15 @@ public class DBLoader {
         conn = getConnection();
     }
 
+    public void close() {
+        try {
+            conn.close();
+
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+    }
+
     public Connection getConnection() {
         conn = null;
 

@@ -46,6 +46,8 @@ public class GmapsTypeDetail {
 		map.put("hair_care", Types.beauty);
 		map.put("beauty_salon", Types.beauty);
 
+		map.put("establishment", Types.service);
+		map.put("general_contractor", Types.service);
 		map.put("locksmith", Types.service);
 		map.put("accounting", Types.service);
 		map.put("movie_rental", Types.service);
@@ -54,6 +56,7 @@ public class GmapsTypeDetail {
 		map.put("electrician", Types.service);
 		map.put("real_estate_agency", Types.service);
 		map.put("bank", Types.service);
+		map.put("finance", Types.service);
 		map.put("car_wash", Types.service);
 		map.put("gas_station", Types.service);
 		map.put("roofing_contractor", Types.service);
@@ -71,6 +74,7 @@ public class GmapsTypeDetail {
 		map.put("gym", Types.sport);
 		map.put("bowling_alley", Types.sport);
 		map.put("stadium", Types.sport);
+		map.put("campground", Types.sport);
 
 		map.put("zoo", Types.civic);
 		map.put("aquarium", Types.civic);
@@ -81,6 +85,7 @@ public class GmapsTypeDetail {
 		map.put("park", Types.civic);
 		map.put("amusement_park", Types.civic);
 		map.put("library", Types.civic);
+		map.put("town_square", Types.civic);
 
 		map.put("church", Types.religious);
 		map.put("synagogue", Types.religious);
@@ -111,8 +116,10 @@ public class GmapsTypeDetail {
 		map.put("local_government_office", Types.government);
 		map.put("fire_station", Types.government);
 		map.put("city_hall", Types.government);
+		map.put("political", Types.government);
 
 		map.put("airport", Types.transport);
+		map.put("route", Types.transport);
 		map.put("bus_station", Types.transport);
 		map.put("parking", Types.transport);
 		map.put("subway_station", Types.transport);

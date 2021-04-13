@@ -10,12 +10,16 @@ import com.google.maps.model.PlacesSearchResult;
 import db.Info;
 import db.Tables;
 import db.Utils;
+import element.City;
 import helper.GeoMath;
+import loader.DBLoader;
+import org.locationtech.jts.geom.Coordinate;
 import type.GmapsTypeDetail;
+import wblut.geom.*;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -26,7 +30,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class GmapsRequest {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 
 		for (PlaceType type : PlaceType.values()) {
 			if (GmapsTypeDetail.map.get(type.toUrlValue()) == null) {
@@ -36,6 +40,84 @@ public class GmapsRequest {
 
 		}
 
+		GmapsRequest gr = new GmapsRequest();
+		gr.useCitySearch();
+
+
+	}
+
+	public void useCitySearch() throws IOException {
+		DBLoader loader = new DBLoader();
+		City c = loader.collectCity();
+		loader.close();
+
+		GeoMath geoMath = new GeoMath(c.getLat(), c.getLon());
+		geoMath.setRatio(c.getRatio());
+
+		System.out.println(c.getBoundary().toText());
+		List<WB_Point> pts = new ArrayList<>();
+		for (Coordinate coord : c.getBoundary().getCoordinates()) {
+			double[] xy = geoMath.latLngToXY(coord.y, coord.x);
+			pts.add(new WB_Point(xy));
+		}
+		WB_GeometryFactory gf=new WB_GeometryFactory();
+		WB_Polygon convex = gf.createPolygonConvexHull2D( new WB_Polygon(pts));
+		WB_AABB aabb = convex.getAABB();
+		WB_Point lb = aabb.getMin();
+		WB_Point rt = aabb.getMax();
+
+		int step = 300;
+		int radius = (int)Math.ceil(step/Math.sqrt(2.));
+		Utils db = new Utils();
+		GeoApiContext context = new GeoApiContext.Builder().apiKey(Info.API_KEY).build();
+
+		File file = new File("./data/searchResult.txt");
+		FileWriter out = new FileWriter(file, true );
+
+		BufferedReader in = new BufferedReader(new FileReader(file));
+		String line = in.readLine();
+		List<Integer> nums = new ArrayList<>();
+		List<Double[]> pos = new ArrayList<>();
+		while(line != null) {
+			System.out.println(line);
+			String[] res = line.split(",");
+			nums.add(Integer.valueOf(res[0]));
+			pos.add(new Double[]{Double.valueOf(res[1]), Double.valueOf(res[2])});
+			line = in.readLine();
+		}
+
+		int idx = 0;
+		int cnt = 0;
+
+		for (double x = lb.xd(); x < rt.xd(); x += step) {
+			for (double y = lb.yd(); y < rt.yd(); y += step) {
+				WB_Point pt = new WB_Point(x, y);
+				if(WB_GeometryOp2D.contains2D(pt, convex)) {
+					double[] latlng = geoMath.xyToLatLng(pt.xd(), pt.yd());
+					LatLng position = new LatLng(latlng[0], latlng[1]);
+
+					if(idx < pos.size() && (position.lat - pos.get(idx)[0]) < 1e-6 && (position.lng - pos.get(idx)[1]) < 1e-6){
+						System.out.println("" + position + " use cached.");
+						idx ++;
+						continue;
+					}
+
+
+					cnt ++;
+
+					int tot = searchNearBy(db, context, position, radius);
+					out.write("" + tot + ", " + position + "\n");
+					out.flush();
+
+					System.out.println("Rest requests: " + (262-cnt));
+
+				}
+			}
+		}
+		out.close();
+	}
+
+	public void useGridSearch(String[] args) {
 		GmapsRequest gr = new GmapsRequest();
 
 		String filename = args[0];
@@ -48,7 +130,6 @@ public class GmapsRequest {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
 	}
 
 	/**
@@ -75,6 +156,7 @@ public class GmapsRequest {
 		System.out.println("Total Request: " + total);
 		for (double x = min[0] + step / 2; x < max[0]; x += step) {
 			for (double y = min[1] + step / 2; y < max[1]; y += step) {
+
 				double[] latlng = geoMath.xyToLatLng(x, y);
 				LatLng position = new LatLng(latlng[0], latlng[1]);
 				int tot = searchNearBy(db, context, position, radius);
