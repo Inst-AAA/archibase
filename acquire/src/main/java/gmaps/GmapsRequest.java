@@ -41,14 +41,60 @@ public class GmapsRequest {
 		}
 
 		GmapsRequest gr = new GmapsRequest();
-		gr.useCitySearch();
+		gr.searchFromFile();
+
+
+	}
+
+	public void searchFromFile () throws IOException {
+		DBLoader loader = new DBLoader();
+		City c = loader.collectCity().get(0);
+		loader.close();
+
+		GeoMath geoMath = new GeoMath(c.getLat(), c.getLon());
+		geoMath.setRatio(c.getRatio());
+
+		File file = new File("./data/reSearch.txt");
+
+		BufferedReader in = new BufferedReader(new FileReader(file));
+		String line = in.readLine();
+		List<Integer> nums = new ArrayList<>();
+		List<Double[]> pos = new ArrayList<>();
+		while(line != null) {
+			System.out.println(line);
+			String[] res = line.split(",");
+			nums.add(Integer.valueOf(res[0]));
+			pos.add(new Double[]{Double.valueOf(res[1]), Double.valueOf(res[2])});
+			line = in.readLine();
+		}
+		GeoApiContext context = new GeoApiContext.Builder().apiKey(Info.API_KEY).build();
+		Utils db = new Utils();
+
+		File outfile = new File("./data/searchResult3.txt");
+		FileWriter out = new FileWriter(outfile, true );
+		int step = 300;
+		int radius = (int)Math.ceil(step/Math.sqrt(2.));
+
+		int cnt = 0;
+		for(Double[] latlng : pos) {
+			LatLng position = new LatLng(latlng[0], latlng[1]);
+
+			cnt ++;
+			int tot = searchNearBy(db, context, position, radius);
+			out.write("" + tot + ", " + position + "\n");
+			out.flush();
+			System.out.println("Rest requests: " + (446-cnt));
+
+		}
+		System.out.println(cnt);
+		out.close();
 
 
 	}
 
 	public void useCitySearch() throws IOException {
 		DBLoader loader = new DBLoader();
-		City c = loader.collectCity();
+		City c = loader.collectCity().get(0);
 		loader.close();
 
 		GeoMath geoMath = new GeoMath(c.getLat(), c.getLon());

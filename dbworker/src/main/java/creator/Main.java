@@ -18,19 +18,18 @@ import java.sql.Timestamp;
  */
 public class Main {
     public static void main(String[] args) {
-        String cityname = "wien";
-
-        GeoContainer.OSM_FILENAME = "./data/"+cityname+".pbf";
-        GeoContainer.BLOCK_FILENAME = "./data/"+cityname+"-block.dxf";
-        GeoContainer.BOUNDARY_FILENAME = "./data/"+cityname+"-boundary.geojson";
+        GeoContainer.CITYNAME = "london";
+        GeoContainer.OSM_FILENAME = "./data/"+ GeoContainer.CITYNAME +".pbf";
+        GeoContainer.BLOCK_FILENAME = "./data/"+ GeoContainer.CITYNAME +"-block.dxf";
+//        GeoContainer.BOUNDARY_FILENAME = "./data/"+cityname+"-boundary.geojson";
         GeoContainer.init();
         Utils db = new Utils();
-        createCity(db, cityname, true);
-        filterBuildings(db, true);
+        createCity(db, GeoContainer.CITYNAME, false);
+        filterBuildings(db, false);
 
-        filterRoads(db, true);
-        filterUrbanSpace(db, true);
-        filterBlocks(db, true);
+//        filterRoads(db, true);
+//        filterUrbanSpace(db, true);
+        filterBlocks(db, false);
     }
 
     public static void createCity(Utils db, String name, boolean flag) {
@@ -46,7 +45,7 @@ public class Main {
         v[3] = Double.toString(geoMath.getRatio());
         v[4] = GeoContainer.boundary;
 
-        v[5] = "'" + time.toString() + "'";
+        v[5] = "'" + time + "'";
         db.insertFullData("city", 1, v);
 
     }
@@ -60,10 +59,11 @@ public class Main {
         GeometryFactory gf = new GeometryFactory();
         for (WB_Polygon ply : GeoContainer.blocks) {
             LineString ls = getLineString(gf, geoMath, ply);
-            String[] v = new String[2];
+            String[] v = new String[3];
 
             v[0] = "default";
             v[1] = "ST_GeomFromText('" + ls.toText() + "', 4326)";
+            v[2] = "'" + GeoContainer.CITYNAME + "'";
             db.insertFullData("blocks", 1, v);
 
         }
@@ -94,6 +94,42 @@ public class Main {
         v[4] = "'" + time.toString() + "'";
 
         db.insertFullData("urban_spaces", 2, v);
+    }
+
+    public static String simple3DBuilding(GeoPolyLine building) {
+        String[] keys = {
+                // type
+//                "building",
+//                "building:part",
+
+                // height and level
+                "height",
+                "min_height",
+                "building:levels",
+                "building:min_level",
+
+                // roof
+                "roof:shape",
+                "roof:orientation",
+                "roof:height",
+                "roof:angle",
+                "roof:levels",
+                "roof:direction"
+        };
+
+        StringBuilder hstore = new StringBuilder();
+        for (String key:keys) {
+            if(building.getTags().containsKey(key)) {
+                hstore.append(key);
+                hstore.append("=>");
+                hstore.append(building.getTags().get(key).replace(" ", "").replace(",", "-").replace("'", ""));
+                hstore.append(',');
+            }
+        }
+        if(hstore.length() > 0) {
+            hstore.setLength(hstore.length()-1);
+        }
+        return hstore.toString();
     }
 
     public static void filterUrbanSpace(Utils db, boolean flag) {
@@ -145,14 +181,25 @@ public class Main {
                 Timestamp time = new java.sql.Timestamp(line.getTimestamp().getTime());
                 LineString ls = (LineString) line.getGeometry();
 
-                String[] v = new String[5];
+                String[] v = new String[6];
                 v[0] = "" + line.getOsm_id();
+
+
                 v[1] = "ST_GeomFromText('" + ls.toText() + "', 4326)";
+                // building name
                 if (line.getTags().containsKey("name")) {
                     v[2] = "'" + db.checkString(line.getTags().get("name")) + "'";
                 }
-                v[3] = "'" + line.getTags().get("building") + "'";
-                v[4] = "'" + time.toString() + "'";
+                // building type
+                String type = line.getTags().get("building");
+                if(type == null) type = line.getTags().get("building:part");
+                v[3] = "'" + type.replace(" ", "").replace(",", "-").replace("'", "") + "'";
+
+                // s3db
+                String hstore = simple3DBuilding(line);
+                if (hstore.length() > 0) v[4] = "'"+hstore+"'"+"::hstore";
+                // timestamp
+                v[5] = "'" + time + "'";
 
                 db.insertFullData("buildings", 1, v);
                 cnt++;

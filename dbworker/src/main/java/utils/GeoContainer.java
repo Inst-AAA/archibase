@@ -34,6 +34,7 @@ public class GeoContainer {
 
     public static String BOUNDARY_FILENAME = null;
     public static String BLOCK_FILENAME = null;
+    public static String CITYNAME = null;
     public static String OSM_FILENAME = null;
     public static BiMap<Long, Integer> wayId;
     public static BiMap<Long, Integer> nodeId;

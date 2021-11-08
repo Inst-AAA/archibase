@@ -10,6 +10,7 @@ public class Building {
     LineString ply;
     String name;
     String building;
+    String s3db;
     Date timestamp;
 
     public Long getOsm_id() {
@@ -42,6 +43,14 @@ public class Building {
 
     public void setBuilding(String building) {
         this.building = building;
+    }
+
+    public String getS3db() {
+        return s3db;
+    }
+
+    public void setS3db(String s3db) {
+        this.s3db = s3db;
     }
 
     public Date getTimestamp() {

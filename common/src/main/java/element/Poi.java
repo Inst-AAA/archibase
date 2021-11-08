@@ -1,55 +1,101 @@
 package element;
 
-import wblut.geom.WB_Point;
-
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import org.locationtech.jts.geom.Point;
 
 public class Poi {
-	Date date;
-	WB_Point position;
-	Map<String, String> tags;
+	String id;
+	double lat;
+	double lng;
+	double rating;
+	int userRatingsTotal;
+	String name;
+	String type;
+	String typeDetail;
+	Point point;
 
-	public Poi(WB_Point pts) {
-		position = pts.copy();
-		tags = new HashMap<>();
+	public String getId() {
+		return id;
 	}
 
-	public void addTag(String key, String value) {
-		tags.put(key, value);
+	public void setId(String id) {
+		this.id = id;
 	}
 
-	public WB_Point getPosition() {
-		return position;
+	public double getLat() {
+		return lat;
 	}
 
-	public void setPosition(WB_Point position) {
-		this.position = position;
+	public void setLat(double lat) {
+		this.lat = lat;
 	}
 
-	public Map<String, String> getTags() {
-		return tags;
+	public double getLng() {
+		return lng;
 	}
 
-	public void setTags(Map<String, String> tags) {
-		this.tags = tags;
+	public void setLng(double lng) {
+		this.lng = lng;
 	}
 
-	public Date getDate() {
-		return date;
+	public double getRating() {
+		return rating;
 	}
 
-	public void setDate(Date d) {
-		date = d;
+	public void setRating(double rating) {
+		this.rating = rating;
 	}
 
-	public void printTag() {
-		for (String key : tags.keySet()) {
-			System.out.println("POI key = " + key + ", value = " + tags.get(key));
-		}
-		System.out.println("---------------------------------------------");
+	public int getUserRatingsTotal() {
+		return userRatingsTotal;
 	}
 
+	public void setUserRatingsTotal(int userRatingsTotal) {
+		this.userRatingsTotal = userRatingsTotal;
+	}
 
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
+	}
+
+	public String getTypeDetail() {
+		return typeDetail;
+	}
+
+	public void setTypeDetail(String typeDetail) {
+		this.typeDetail = typeDetail;
+	}
+
+	public Point getPoint() {
+		return point;
+	}
+
+	public void setPoint(Point point) {
+		this.point = point;
+	}
+
+	@Override
+	public String toString() {
+		return "Poi{" +
+				"id='" + id + '\'' +
+				", lat=" + lat +
+				", lng=" + lng +
+				", rating=" + rating +
+				", user_ratings_total=" + userRatingsTotal +
+				", name='" + name + '\'' +
+				", type='" + type + '\'' +
+				", type_detail='" + typeDetail + '\'' +
+				'}';
+	}
 }

@@ -11,7 +11,8 @@ import utils.GeoContainer;
  */
 public class Generate {
     public static void main(String[] args) {
-        GeoContainer.OSM_FILENAME = "./data/wien.pbf";
+        GeoContainer.CITYNAME = "london";
+        GeoContainer.OSM_FILENAME = "./data/"+GeoContainer.CITYNAME+".pbf";
         GeoContainer.init();
         PApplet.main("analysis.Show");
     }

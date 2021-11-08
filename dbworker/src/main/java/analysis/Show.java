@@ -52,7 +52,7 @@ public class Show extends PApplet {
 
 //        blocks = readDXF("./data/wien-block.dxf");
         blocks = ShapeAnalysis.getInstance().getMapPolygon(roads);
-        saveDXF("./data/wien-block.dxf");
+        saveDXF("./data/"+GeoContainer.CITYNAME+"-block.dxf");
     }
 
     public void draw() {

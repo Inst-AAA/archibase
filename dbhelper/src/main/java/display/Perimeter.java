@@ -3,6 +3,7 @@ package display;
 import Guo_Cam.Vec_Guo;
 import element.Block;
 import element.Building;
+import element.City;
 import element.Road;
 import helper.GeoMath;
 import helper.Tools;
@@ -12,22 +13,23 @@ import processing.core.PGraphics;
 import wblut.geom.*;
 import wblut.processing.WB_Render2D;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 
 public class Perimeter extends PApplet {
     public static final int LEN_OF_CAMERA = 500;
-    public static final int MODE = 3; // 0 - block , 1 - all, 2 - all without block, 3 - line
-    Tools tools;
+    public static final int MODE = 0; // 0 - block , 1 - all, 2 - all without block, 3 - line
+    public static final boolean S3DB = false;
     List<Road> roads;
     List<Building> buildings;
     List<Block> blocks;
-    GeoMath geoMath;
+    Tools tools;
     DBLoader db;
     Random rand;
 
+    Map<String, GeoMath> mp = new HashMap<>();
+
+    GeoMath geoMath;
     int id;
     int time;
     int[] vis;
@@ -46,8 +48,19 @@ public class Perimeter extends PApplet {
         blocks = db.collectBlock();
 
         rand = new Random(123);
-        geoMath = new GeoMath(48.217000000000006, 16.3885);
-        geoMath.setRatio(new double[]{48.11000000000001, 16.152}, new double[]{48.324000000000005, 16.625});
+
+
+        List<City> cities = db.collectCity();
+
+        for (City city : cities) {
+
+            GeoMath geoMath = new GeoMath(city.getLat(), city.getLon());
+            geoMath.setRatio(city.getRatio());
+            mp.put(city.getName(), geoMath);
+
+            System.out.println(city);
+        }
+
 
         id = 0;
         if (MODE == 0 || MODE == 3) {
@@ -72,11 +85,11 @@ public class Perimeter extends PApplet {
         if (id < blocks.size()) {
             if (MODE == 0) {
                 drawCityBlocks(this.g);
-            } else if(MODE == 1) {
+            } else if (MODE == 1) {
                 drawAll(this.g);
-            } else if(MODE == 2){
+            } else if (MODE == 2) {
                 drawAllBlank(this.g);
-            } else if(MODE == 3){
+            } else if (MODE == 3) {
                 drawLine(this.g);
             }
 
@@ -92,7 +105,7 @@ public class Perimeter extends PApplet {
                 if (MODE == 0 || MODE == 3) {
                     while (id < blocks.size() && !nextBlock(id)) {
                         id += 1;
-                        nextBlock(id);
+//                        nextBlock(id);
                     }
                 } else {
 
@@ -163,6 +176,7 @@ public class Perimeter extends PApplet {
             render.drawPolyLine2D(ply);
         }
     }
+
     public void drawLine(PGraphics app) {
         app.background(255);
         app.stroke(0);
@@ -200,12 +214,13 @@ public class Perimeter extends PApplet {
             app.fill(0);
             app.stroke(255);
 
-            WB_Polygon ply = Tools.toWB_Polygon(building.getPly(), geoMath);
-            WB_Point pt = ply.getCenter();
-            if (WB_GeometryOp2D.contains2D(pt, block)) {
-                save = true;
-                render.drawPolygonEdges2D(ply);
+            if (S3DB && building.getS3db() != null) {
+                app.fill(255, 0, 0);
             }
+
+            save = true;
+            WB_Polygon ply = Tools.toWB_Polygon(building.getPly(), geoMath);
+            render.drawPolygonEdges2D(ply);
 
         }
     }
@@ -214,13 +229,14 @@ public class Perimeter extends PApplet {
         System.out.println("# " + id + "/" + blocks.size() + " :");
         String filename = blocks.get(id).getID() + ".jpg";
         System.out.println(filename + " saved.");
-        if(MODE==1) {
+        if (MODE == 1) {
             app.saveFrame("./fig/street/" + filename);
-        } else if(MODE == 0) {
-            app.saveFrame("./fig/block/" + filename);
-        } else if(MODE == 2){
+        } else if (MODE == 0) {
+            if(S3DB) app.saveFrame("./fig/alpha/s3db/" + filename);
+            else app.saveFrame("./fig/alpha/block/" + filename);
+        } else if (MODE == 2) {
             app.saveFrame("./fig/blank/" + filename);
-        } else if(MODE == 3) {
+        } else if (MODE == 3) {
             app.saveFrame("./fig/line/" + filename);
         }
     }
@@ -250,6 +266,7 @@ public class Perimeter extends PApplet {
 
     public boolean nextAll(int blockID) {
         id = blockID;
+        geoMath = mp.get(blocks.get(id).getCity());
         WB_Polygon block = Tools.toWB_Polygon(blocks.get(id).getPly(), geoMath);
         double[] aabb = getAABB(block);
 
@@ -271,12 +288,49 @@ public class Perimeter extends PApplet {
 
     public boolean nextBlock(int blockID) {
         id = blockID;
+        geoMath = mp.get(blocks.get(id).getCity());
         WB_Polygon block = Tools.toWB_Polygon(blocks.get(id).getPly(), geoMath);
         double[] aabb = getAABB(block);
-        buildings = db.collectBuildings(aabb[0], aabb[1], aabb[2], aabb[3], 4326);
-        System.out.println("ID " + id + " get buildings " + buildings.size());
-        if (buildings.size() > 100) return false;
-        if (buildings.size() == 0) return false;
+
+        buildings = new ArrayList<>();
+        List<Building> raw_buildings = db.collectBuildings(aabb[0], aabb[1], aabb[2], aabb[3], 4326);
+        System.out.println("ID " + id + " get buildings " + raw_buildings.size());
+
+        if (raw_buildings.size() > 200) return false;
+        if (raw_buildings.size() == 0) return false;
+
+
+        // valid check
+
+        // building area
+
+        // include s3db
+        boolean valid = false;
+        double area = 0;
+        for (Building building : raw_buildings) {
+//                System.out.println(s3db);
+
+            WB_Polygon ply = Tools.toWB_Polygon(building.getPly(), geoMath);
+            WB_Point pt = ply.getCenter();
+            if (WB_GeometryOp2D.contains2D(pt, block)) {
+                area += Math.abs(ply.getSignedArea());
+                buildings.add(building);
+
+                if(S3DB) {
+                    String s3db = building.getS3db();
+                    if (s3db != null) valid = true;
+                } else {
+                    valid = true;
+                }
+            }
+        }
+
+        if (!valid) return false;
+        double total = Math.abs(block.getSignedArea());
+
+        if (area / total < 0.25) return false;
+
+        System.out.println(area + " " + total + " = " + area / total);
 
         // move camera
         moveCamera(block);
@@ -292,6 +346,7 @@ public class Perimeter extends PApplet {
         tools.cam.getCamera().updateProjectionMatrix();
 
     }
+
     public static void main(String[] args) {
         PApplet.main("display.Perimeter");
     }

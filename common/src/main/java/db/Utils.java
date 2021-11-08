@@ -112,7 +112,7 @@ public class Utils {
             } else {
                 sql.append(");");
             }
-            System.out.println(sql.toString());
+            System.out.println(sql);
 
             stmt.executeUpdate(sql.toString());
             stmt.close();

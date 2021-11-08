@@ -15,17 +15,21 @@ import wblut.geom.WB_PolyLine;
 import wblut.geom.WB_Polygon;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class Display extends PApplet {
     public static final int LEN_OF_CAMERA = 5000;
+    public static final String CITYNAME = "wien";
     Tools tools;
     List<Road> roads;
     List<Building> buildings;
     List<UrbanSpace> urbanSpaces;
     List<Block> blocks;
-    GeoMath geoMath;
+//    GeoMath geoMath;
+    Map<String, GeoMath> mp = new HashMap<>();
 
     public static void main(String[] args) {
         PApplet.main("display.Display");
@@ -37,17 +41,20 @@ public class Display extends PApplet {
     public void setup() {
         tools = new Tools(this, LEN_OF_CAMERA);
         DBLoader db = new DBLoader();
-        City city = db.collectCity();
+        List<City> cities = db.collectCity();
         roads = db.collectRoad();
         buildings = db.collectBuildings();
         urbanSpaces = db.collectUrbanSpace();
         blocks = db.collectBlock();
 
-        geoMath = new GeoMath(city.getLat(), city.getLon());
-        geoMath.setRatio(city.getRatio());
-        System.out.println(Arrays.toString(getCenter()));
+        for (City city: cities) {
+            GeoMath geoMath = new GeoMath(city.getLat(), city.getLon());
+            geoMath.setRatio(city.getRatio());
+            mp.put(city.getName(), geoMath);
+            System.out.println(Arrays.toString(getCenter()));
 
-        System.out.println(city);
+            System.out.println(city);
+        }
     }
 
     public void draw() {
@@ -57,14 +64,14 @@ public class Display extends PApplet {
             int[] c = OsmTypeDetail.roadColor.get(road.getRoadType());
             stroke(c[0], c[1], c[2]);
 
-            WB_PolyLine ply = Tools.toWB_Polygon(road.getPly(), geoMath);
+            WB_PolyLine ply = Tools.toWB_Polygon(road.getPly(), mp.get(CITYNAME));
             tools.render.drawPolylineEdges(ply);
         }
 
         for (Building building: buildings) {
             stroke(255);
             noFill();
-            WB_Polygon ply = Tools.toWB_Polygon(building.getPly(), geoMath);
+            WB_Polygon ply = Tools.toWB_Polygon(building.getPly(), mp.get(CITYNAME));
             tools.render.drawPolygonEdges(ply);
 
         }
@@ -72,7 +79,7 @@ public class Display extends PApplet {
         for (Block block : blocks) {
             stroke(255);
             noFill();
-            WB_Polygon ply = Tools.toWB_Polygon(block.getPly(), geoMath);
+            WB_Polygon ply = Tools.toWB_Polygon(block.getPly(), mp.get(CITYNAME));
             tools.render.drawPolygonEdges(ply);
         }
 
@@ -84,15 +91,15 @@ public class Display extends PApplet {
 
             Geometry geom = urbanSpace.getGeom();
             if (geom.getGeometryType().equals("Point")) {
-                WB_Point pt = urbanSpace.getWB_Pt(geoMath);
+                WB_Point pt = urbanSpace.getWB_Pt(mp.get(CITYNAME));
                 tools.drawPoint(pt, 2.5, c);
             } else if (geom.getGeometryType().equals("LineString")) {
                 LineString ls = (LineString) geom;
                 if (ls.isClosed()) {
-                    WB_Polygon ply = urbanSpace.getWB_Pg(geoMath, ls);
+                    WB_Polygon ply = urbanSpace.getWB_Pg(mp.get(CITYNAME), ls);
                     tools.render.drawPolygonEdges(ply);
                 } else {
-                    WB_PolyLine ply = urbanSpace.getWB_Pl(geoMath, ls);
+                    WB_PolyLine ply = urbanSpace.getWB_Pl(mp.get(CITYNAME), ls);
                     stroke(c[0], c[1], c[2]);
                     tools.render.drawPolylineEdges(ply);
                 }
@@ -102,10 +109,10 @@ public class Display extends PApplet {
                     Geometry geome = geom.getGeometryN(i);
                     LineString ls = (LineString) geome;
                     if (ls.isClosed()) {
-                        WB_Polygon ply = urbanSpace.getWB_Pg(geoMath, ls);
+                        WB_Polygon ply = urbanSpace.getWB_Pg(mp.get(CITYNAME), ls);
                         tools.render.drawPolygonEdges(ply);
                     } else {
-                        WB_PolyLine ply = urbanSpace.getWB_Pl(geoMath, ls);
+                        WB_PolyLine ply = urbanSpace.getWB_Pl(mp.get(CITYNAME), ls);
                         stroke(c[0], c[1], c[2]);
                         tools.render.drawPolylineEdges(ply);
                     }

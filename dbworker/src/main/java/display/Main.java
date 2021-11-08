@@ -12,8 +12,9 @@ import utils.GeoContainer;
 public class Main {
 
     public static void main(String[] args) {
-        GeoContainer.OSM_FILENAME = "./data/wien.pbf";
-        GeoContainer.BLOCK_FILENAME = "./data/wien-block.dxf";
+        GeoContainer.CITYNAME = "athens";
+        GeoContainer.OSM_FILENAME = "./data/"+GeoContainer.CITYNAME+".pbf";
+        GeoContainer.BLOCK_FILENAME = "./data/"+GeoContainer.CITYNAME+"-block.dxf";
         GeoContainer.init();
         PApplet.main("display.Show");
     }

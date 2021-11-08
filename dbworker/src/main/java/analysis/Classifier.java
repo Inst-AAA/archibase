@@ -41,6 +41,7 @@ public class Classifier {
         switch (type) {
             case "building":
                 flag = geom.getTags().containsKey("building");
+                flag |= geom.getTags().containsKey("building:part");
                 if (geom.getGeometry().getGeometryType().equals("LineString")) {
                     LineString ls = (LineString) geom.getGeometry();
                     flag &= ls.isClosed();

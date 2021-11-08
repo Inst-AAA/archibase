@@ -3,8 +3,9 @@ package element;
 import org.locationtech.jts.geom.LineString;
 
 public class Block {
-    Long id;
-    LineString ply;
+    public Long id;
+    public LineString ply;
+    public String city;
 
     public Long getID() {
         return id;
@@ -20,6 +21,14 @@ public class Block {
 
     public void setPly(LineString ply) {
         this.ply = ply;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
     }
 
     @Override

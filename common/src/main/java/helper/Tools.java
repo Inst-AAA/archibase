@@ -88,6 +88,17 @@ public class Tools {
         return new WB_Polygon(pts);
     }
 
+    public static WB_PolyLine toWB_PolyLine(LineString ls, GeoMath geoMath) {
+        Coordinate[] coords = ls.getCoordinates();
+        WB_Point[] pts = new WB_Point[coords.length];
+
+        for (int i = 0; i < coords.length; ++ i) {
+            double[] xy = geoMath.latLngToXY(coords[i].y, coords[i].x);
+            pts[i] = new WB_Point(xy);
+        }
+        return new WB_PolyLine(pts);
+    }
+
     public static double[][] toPoint3D(List<WB_Point> pts) {
         if (pts == null)
             return null;

@@ -24,6 +24,8 @@ public class Show extends PApplet {
         tools = new Tools(this, LEN_OF_CAMERA);
 //        System.out.println(GeoContainer.MAP_LAT_LNG[0] + " " + GeoContainer.MAP_LAT_LNG[1]);
         geoMath = new GeoMath(GeoContainer.MAP_LAT_LNG);
+        geoMath.setRatio(GeoContainer.SW_LAT_LNG, GeoContainer.NE_LAT_LNG);
+        System.out.println(geoMath.getRatio());
         city = new GeoCity(geoMath);
 
 
@@ -34,8 +36,8 @@ public class Show extends PApplet {
         background(255);
         city.setTags( "building");
 
-        String filename = "./fig/wien-fine.jpg";
-        city.save(this, 5000, 5000, filename);
+        String filename = "./fig/"+ GeoContainer.CITYNAME+ "-fine.jpg";
+        city.save(this, 9000, 9000, filename);
     }
 
     public void draw() {

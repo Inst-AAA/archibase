@@ -4,6 +4,8 @@ import java.io.BufferedInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
@@ -22,9 +24,9 @@ public class OSMRequest {
         try {
             url = new URL("https://www.openstreetmap.org/api/0.6/map?bbox=" + bbox);
             System.out.println(url.toString());
-//            Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 4780));
+            Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 7890));
 
-            connection = (HttpURLConnection) url.openConnection();
+            connection = (HttpURLConnection) url.openConnection(proxy);
             connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.4; en-US; rv:1.9.2.2) Gecko/20100316 Firefox/3.6.2");
             connection.setRequestProperty("Content-type", "application/json");
             connection.connect();

@@ -34,6 +34,7 @@ public class Tables {
             {"geom", "geometry(linestring, 4326)"},
             {"name", "varchar"},
             {"building_type", "varchar"},
+            {"s3db", "hstore"},
             {"timestamp", "date"}
     };
 
@@ -60,7 +61,8 @@ public class Tables {
 
     public static String[][] blocks = {
             {"id", "serial"},
-            {"geom", "geometry(linestring, 4326)"}
+            {"geom", "geometry(linestring, 4326)"},
+            {"city", "varchar"}
     };
 
     public static String[][] change_set = {

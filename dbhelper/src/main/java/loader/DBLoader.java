@@ -41,7 +41,8 @@ public class DBLoader {
         return conn;
     }
 
-    public City collectCity() {
+    public List<City> collectCity() {
+        List<City> cities = new ArrayList<>();
         try {
             stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery("select name, lat, lon, ratio, st_astext(boundary), timestamp from city");
@@ -56,8 +57,10 @@ public class DBLoader {
                 c.setBoundary((Polygon) reader.read(rs.getString(5)));
                 c.setTimestamp(rs.getTimestamp(6));
 
-                return c;
+                cities.add(c);
             }
+
+            return cities;
         } catch (SQLException | ParseException e) {
             e.printStackTrace();
         }
@@ -123,8 +126,8 @@ public class DBLoader {
         List<Building> buildings = new ArrayList<>();
         try {
             stmt = conn.createStatement();
-            String query = String.format("select id, st_astext(geom), name, building_type, timestamp from buildings where buildings.geom && st_makeenvelope(%f,%f,%f,%f, %d)", xmin, ymin, xmax, ymax, srid);
-            System.out.println(query);
+            String query = String.format("select id, st_astext(geom), name, building_type, s3db, timestamp from buildings where buildings.geom && st_makeenvelope(%f,%f,%f,%f, %d)", xmin, ymin, xmax, ymax, srid);
+//            System.out.println(query);
             ResultSet rs = stmt.executeQuery(query);
 
             WKTReader reader = new WKTReader();
@@ -136,11 +139,13 @@ public class DBLoader {
                 if (rs.getString(3) != null)
                     r.setName(rs.getString(3).trim());
                 r.setBuilding(rs.getString(4).trim());
-                r.setTimestamp(rs.getTimestamp(5));
+                if(rs.getString(5) != null && rs.getString(5).length() > 0)
+                    r.setS3db(rs.getString(5).trim());
+                r.setTimestamp(rs.getTimestamp(6));
 
                 buildings.add(r);
             }
-            System.out.println("Finish collecting buildings");
+//            System.out.println("Finish collecting buildings");
         } catch (SQLException | ParseException e) {
             e.printStackTrace();
         }
@@ -227,7 +232,7 @@ public class DBLoader {
 
         try {
             stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery("select id, st_astext(geom) from blocks;");
+            ResultSet rs = stmt.executeQuery("select id, st_astext(geom), city from blocks;");
 
             WKTReader reader = new WKTReader();
 
@@ -235,6 +240,7 @@ public class DBLoader {
                 Block b = new Block();
                 b.setID(rs.getLong(1));
                 b.setPly((LineString) reader.read(rs.getString(2)));
+                b.setCity(rs.getString(3));
                 blocks.add(b);
             }
 
@@ -243,5 +249,28 @@ public class DBLoader {
             e.printStackTrace();
         }
         return blocks;
+    }
+
+
+    public Block collectBlock(int id) {
+
+        try {
+            stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery("select id, st_astext(geom), city from blocks where id="+id+";");
+
+            WKTReader reader = new WKTReader();
+
+            if (rs.next()) {
+                Block b = new Block();
+                b.setID(rs.getLong(1));
+                b.setPly((LineString) reader.read(rs.getString(2)));
+                b.setCity(rs.getString(3));
+                return b;
+            }
+
+        } catch (SQLException | ParseException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }
